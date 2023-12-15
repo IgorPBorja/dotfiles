@@ -1,0 +1,13 @@
+configuration {
+	combi-modi: "window,drun,ssh";
+	font: "hack 14";
+	modi: "combi";
+	icon-theme :"Papirus";
+	yoffset: -200;
+	steal-focus: true; /* steal focus to rofi menu (from anything)*/
+	show-icons: true;
+	sidebar-mode: true; /* show info about modes at the bottom */
+}
+@theme "/home/igor/.local/share/rofi/themes/nord.rasi"
+
+

@@ -1,0 +1,53 @@
+* $mod key: Super
+
+* Shortcuts (i3)
+	- $mod + Enter: open terminal
+	- $mod + v: split window vertically
+	- $mod + h: split window horizontally
+	- $mod + d: open DMenu (where you can type to open a specific application)
+	- $mod + 1: open Workspace 1
+	...
+	- $mod + 9: open Workspace 9
+	- $mod + q: close window
+	- $mod + Left: switch to window on the left
+	- $mod + Right: switch to window on the right
+	- $mod + Up: switch to window above
+	- $mod + Down: switch to window below
+	- $mod + Shift + e: open prompt to leave i3 (logoff) 
+	- $mod + Shift + c: apply i3 config changes to current session	
+
+* Shortcuts (terminal)
+	- Ctrl + c: copy
+	- Ctrl + v: paste
+	- Ctrl + t: new tab
+	- Ctrl + n: new window (equivalent to $mod + Enter)
+	- Ctrl + w: close tab
+	- Ctrl + Shift + w: close window (equivalent to $Mod + Shift + q applied at the terminal window)
+	- Ctrl + Up: switch to next window 
+	- Ctrl + Down: switch to previous window
+	- Ctrl + a: select all
+	- Ctrl + r: reset
+	- Ctrl + Shift + r: reset and clear
+
+* Shortcuts (Vim)
+	- Shift + ; : access command mode
+	- Esc: go to normal mode
+	- i: enter insert mode
+	- /: search
+	- v: visual mode 
+	- y: yank/copy selected region (selected with visual mode)
+	- d: delete (and yank/copy) selected region (selected with visual mode)
+	- yy: yank/copy line 
+	- dd: delete (and yank/copy) line
+	- p: paste (register) after cursor position
+	- Shift + p: paste (register) at cursor position
+    - ":sp": split window (vertical)
+    - ":vs": split window (horizontal)
+
+    - Terminal
+        * Access via ":term"
+
+    - NERDTree:
+        * Access via ":NERDTree"
+        * Showing hidden files: "Shift + i"
+        * Quit (as all other windows) with ":q"
