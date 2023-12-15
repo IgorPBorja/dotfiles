@@ -1,0 +1,56 @@
+# i3status configuration file.
+# see "man i3status" for documentation.
+
+# It is important that this file is edited as UTF-8.
+# The following line should contain a sharp s:
+# ß
+# If the above line is not correctly displayed, fix your editor first!
+
+general {
+    output_format = "i3bar"
+    colors = true
+    interval = 5
+}
+
+order += "disk /"
+order += "battery 0"
+order += "memory"
+order += "tztime local"
+order += "ethernet eth0"
+order += "wireless wlan0"
+
+disk "/" {
+    format = "💽 %avail"
+    min_width = "20"
+}
+
+battery 0 {
+    format = "🔋 %status %percentage %remaining"
+    status_chr = "⚡"
+    status_bat = "🔋"
+    status_unk = "?"
+    status_full = "🔌"
+    min_width = "20"
+}
+
+memory {
+  memory_used_method = classical
+  format="RAM Usage: %used/%total"
+}
+
+tztime local {
+    format = "📆 %Y-%m-%d ⏰ %H:%M:%S"
+    min_width = "20"
+}
+
+ethernet eth0 {
+    format_up = "🌐 %ip"
+    format_down = "🌐 Down"
+    min_width = "20"
+}
+
+wireless wlan0 {
+    format_up = "📡 %essid (%quality)"
+    format_down = "📡 Down"
+    min_width = "20"
+}
