@@ -1,5 +1,7 @@
-doom ~/.config/doom
-nvim ~/.config/nvim
-i3 ~/.config/i3
-i3status ~/.config/i3status
-rofi ~/.config/rofi
+~/.config/doom
+~/.config/nvim
+~/.config/i3
+~/.config/i3status
+~/.config/rofi
+~/.zshrc
+~/.oh-my-zsh
