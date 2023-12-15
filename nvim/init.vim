@@ -113,8 +113,8 @@ set relativenumber
 " Use space characters instead of tabs.
 " set expandtab
 
-" Do not save backup files (.swp)
-set nobackup
+" Forget about swap files (but still save them)
+set shortmess+=A
 
 " Do not let cursor scroll below or above N number of lines when scrolling.
 set scrolloff=10
@@ -704,3 +704,15 @@ autocmd Filetype javascript set sw=2 ts=2 sts=2
 autocmd Filetype javascriptreact set sw=2 ts=2 sts=2
 autocmd Filetype html set sw=2 ts=2 sts=2
 autocmd Filetype css set sw=2 ts=2 sts=2
+
+" ------------------------------------------------
+" Avoding with nested nvim sessions
+" ------------------------------------------------
+
+" SEE: https://github.com/mhinz/neovim-remote
+" Use nvr as git commit editor
+if has('nvim')
+  let $GIT_EDITOR = 'nvr -cc split --remote-wait'
+endif
+" So simple :wq exits commit editor
+autocmd FileType gitcommit,gitrebase,gitconfig set bufhidden=delete

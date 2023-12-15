@@ -18,20 +18,9 @@ fi
 user=$(whoami)
 cat index | while read line
 do
-	## words=($line) ## interpret the whitespace separated line as an array of words
+	words=($line)
 	if [ "$verbose" = true ]; then
-		echo "Copying --${line}--"
+		echo "Copying --${words[1]}-- from /home/${user} to ${words[0]}"
 	fi
-	cp -r "/home/$user/$line" "."
-done
-
-# recursively remove .git repos
-# EXCEPT for the .git directory in the root directory
-# the parenthesis around the cd command cause it to run in a subshell
-if [ "$verbose" = true ]; then
-	echo "Removing .git directories recursively"
-fi
-for dir in ./*/
-do
-	(cd "$dir" && find . -name ".git" -type d -exec rm -rf {} \;)
+	rsync -lrv --exclude=.git "/home/${user}/${words[1]}" ${words[0]}
 done
