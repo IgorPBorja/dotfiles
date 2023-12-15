@@ -1,0 +1,5 @@
+doom ~/.config/doom
+nvim ~/.config/nvim
+i3 ~/.config/i3
+i3status ~/.config/i3status
+rofi ~/.config/rofi
