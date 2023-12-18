@@ -20,7 +20,7 @@ cat index | while read line
 do
 	words=($line)
 	if [ "$verbose" = true ]; then
-		echo "Copying --${words[1]}-- from /home/${user} to ${words[0]}"
+		echo "Copying --/home/${user}/${words[0]} to repo root"
 	fi
-	rsync -lrv --exclude=.git "/home/${user}/${words[1]}" ${words[0]}
+	rsync -lrv --exclude=.git "/home/${user}/${words[0]}" .
 done

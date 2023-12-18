@@ -1,6 +1,6 @@
-nvim .config/nvim
-i3 .config/i3
-i3status .config/i3status
-rofi .config/rofi
-.zshrc .zshrc
-.oh-my-zsh .oh-my-zsh
+.config/nvim
+.config/i3
+.config/i3status
+.config/rofi
+.zshrc
+.oh-my-zsh
