@@ -15,6 +15,8 @@ call plug#begin('~/.vim/plugged')
 	Plug 'preservim/nerdcommenter'
 	" Plug 'mcchrish/nnn.vim'
 	Plug 'preservim/nerdtree'	
+	" integration of nerdtree with git
+	Plug 'Xuyuanp/nerdtree-git-plugin'
 	Plug 'jiangmiao/auto-pairs'
 	
 	" Tree-sitter for syntax-hightlighting
@@ -77,6 +79,9 @@ call plug#begin('~/.vim/plugged')
 
 	" Plugin for Racket
 	Plug 'wlangstroth/vim-racket'
+
+	" Plugin for debugger
+	Plug 'puremourning/vimspector'
 call plug#end()
 
 
@@ -182,11 +187,20 @@ nnoremap <Space>j <C-w>j
 " see https://stackoverflow.com/questions/1851225/noremapping-a-sequence-of-keystrokes-to-command-line-commands
 " open terminal (new tab)
 " see  https://vi.stackexchange.com/questions/24806/how-to-open-a-terminal-horizontally-on-the-right-side-of-vim
-nnoremap <Space>t :tabnew<CR>:term<CR>
+" nnoremap <Space>t :tabnew<CR>:term<CR>
+" better!: open terminal below
+nnoremap <Space>t :belowright terminal<CR>
+
 " horizontal split
 nnoremap <Space><Tab>n :vsp<CR>
 " vertical split
 nnoremap <Space><Tab>nv :sp<CR>
+
+" Easier resizing of windows with C-S-Arrow
+nnoremap <C-S-Right> <C-w>3>
+nnoremap <C-S-Left> <C-w>3<
+nnoremap <C-S-Up> <C-w>3+
+nnoremap <C-S-Down> <C-w>3-
 
 " mapping 'copy/paste from system clipboard' (+ register, accesed via "+) 
 nnoremap <C-v> "+p
@@ -709,10 +723,82 @@ autocmd Filetype css set sw=2 ts=2 sts=2
 " Avoding with nested nvim sessions
 " ------------------------------------------------
 
-" SEE: https://github.com/mhinz/neovim-remote
-" Use nvr as git commit editor
-if has('nvim')
-  let $GIT_EDITOR = 'nvr -cc split --remote-wait'
-endif
-" So simple :wq exits commit editor
-autocmd FileType gitcommit,gitrebase,gitconfig set bufhidden=delete
+" TODO FIXME: does using nvr (neovim remotely) conflicts with the vimspector
+" debugger?
+" " SEE: https://github.com/mhinz/neovim-remote
+" " Use nvr as git commit editor
+" if has('nvim')
+"   let $GIT_EDITOR = 'nvr -cc split --remote-wait'
+" endif
+" " So simple :wq exits commit editor
+" autocmd FileType gitcommit,gitrebase,gitconfig set bufhidden=delete
+
+" ------------------------------------------------
+"  Configuration for debugging with vimspector
+"  vimspector is not a debugger, but a front-end/middle-man between vim and
+"  the existing debuggers for various languages, like python (e.g.: debugpy), node
+"  (e.g: vscode-node), etc
+" ------------------------------------------------
+
+nnoremap <Space>ds :call vimspector#Launch()<CR>
+nnoremap <Space>dr :call vimspector#Reset()<CR>
+nnoremap <Space>dc :call vimspector#Continue()<CR>
+nnoremap <Space>dt :call vimspector#ToggleBreakpoint()<CR>
+nnoremap <Space>dT :call vimspector#ClearBreakpoints()<CR>
+nnoremap <Space>dk :call vimspector#Restart()<CR>
+nnoremap <Space>dh :call vimspector#StepOut()<CR>
+nnoremap <Space>dl :call vimspector#StepInto()<CR>
+nnoremap <Space>dj :call vimspector#StepOver()<CR>
+
+command! DebugMappings call s:ShowDebugMappings()
+command! LspMappings call s:ShowLspMappings()
+
+function! s:ShowFloat(lines) abort
+	" Create new scratch buffer for the floating window
+	" nvim_create_buf takes 2 arguments (boolean flags)
+	" the first one (listed) determines if the buffer should be listed or not
+	" (listed buffers are the ones that appear on the tab view at the top and on telescope buffer list (<Leader>b))
+	" the other is "scratch" and I don't know exactly what it is for
+	let bufnr = nvim_create_buf(v:false, v:false)
+
+	call nvim_buf_set_lines(bufnr, 0, -1, v:true, a:lines)
+
+	" Create a floating window and set its content
+	let b:win_id = nvim_open_win(bufnr, v:true, {
+		\ 'relative': 'win',
+		\ 'row': 2,
+		\ 'col': 2,
+        \ 'width' : 100,
+        \ 'height' : 25,
+        \ 'style' : 'minimal'
+        \ })
+
+    " Set the window to close when pressing 'q'
+	nnoremap <buffer><silent> q :call nvim_win_close(b:win_id, v:true)<CR>
+
+    " Set the window to close when leaving insert mode
+	inoremap <buffer><silent> <Esc> <Esc>:call nvim_win_close(b:win_id, v:true)<CR>
+endfunction
+
+function! s:ShowDebugMappings() abort
+    let l:mappings = [
+        \ '<Leader>dc: Continue',
+        \ '<Leader>dt: Toggle Breakpoint',
+        \ '<Leader>dT: Clear Breakpoints',
+        \ '<Leader>dk: Restart',
+        \ '<Leader>dh: Step Out',
+        \ '<Leader>dl: Step Into',
+        \ '<Leader>dj: Step Over',
+        \ ]
+
+	call s:ShowFloat(l:mappings)
+endfunction
+
+function! s:ShowLspMappings() abort
+	let l:mappings = [
+		\ '<Leader>e: Show error message associated to code under cursor',
+		\ 'gd: goto definition',
+		\ 'K: show type/signature information',
+		\ ]
+	call s:ShowFloat(l:mappings)
+endfunction
