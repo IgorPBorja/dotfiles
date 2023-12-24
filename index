@@ -2,5 +2,6 @@
 .config/i3
 .config/i3status
 .config/rofi
+.config/pycodestyle
 .zshrc
 .oh-my-zsh
