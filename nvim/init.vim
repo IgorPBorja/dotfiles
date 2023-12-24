@@ -840,11 +840,12 @@ function! s:ShowLspMappings() abort
 	call s:ShowFloat(l:mappings)
 endfunction
 
-"" Black - automatic formatter for python
-"" I call black externally (via command line) and then reload the buffer
-function! s:Black() abort
+"" Autopep8 - automatic formatter for python
+"" I call autopep8 externally (via command line) and then reload the buffer
+function! s:Autopep8() abort
 	let l:file = expand("%:p")
-	let l:cmd = "black " . l:file
+	" the -i flag means 'in-place' (i.e modify the file)
+	let l:cmd = "autopep8 -i " . l:file
 	let l:output = system(l:cmd)
 	if v:shell_error
 		echohl ErrorMsg
@@ -852,8 +853,9 @@ function! s:Black() abort
 		echohl None
 	else
 		echo l:output
+		" reload the buffer
 		execute ":e"
 	endif
 endfunction
 
-command! -nargs=0 FormatBuffer :call s:Black()<CR>
+command! -nargs=0 FormatBuffer :call s:Autopep8()<CR>
