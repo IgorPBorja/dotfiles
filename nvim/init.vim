@@ -854,7 +854,7 @@ function! s:Autopep8() abort
 	else
 		echo l:output
 		" reload the buffer
-		execute ":e"
+		execute ":e!"
 	endif
 endfunction
 
