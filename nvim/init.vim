@@ -83,9 +83,6 @@ call plug#begin('~/.vim/plugged')
 
 	" Plugin for debugger
 	Plug 'puremourning/vimspector'
-
-	" Plugin for LSP signature while typing
-	Plug 'ray-x/lsp_signature.nvim'
 call plug#end()
 
 
@@ -441,13 +438,15 @@ lua<<
 			configurationSources = { 'pycodestyle' }, -- will look for file ~/.config/pycodestyle
 			pyls = {
 				plugins = {
+					-- automatic formatter (install it with pip3 install black)
+					black = { enabled = true },
 					-- type checker
 					pylsp_mypy = { enabled = true },
 					-- auto completion options
 					jedi_completion = { fuzzy = true, eager = true },
 					jedi_signature_help = { enabled = true },
 					-- linter
-					pycodestyle = { enabled = true, ignore = {'E501'} }, -- E501: line too long
+					pycodestyle = { enabled = false }
 				},
 			},
 		},
@@ -841,11 +840,20 @@ function! s:ShowLspMappings() abort
 	call s:ShowFloat(l:mappings)
 endfunction
 
+"" Black - automatic formatter for python
+"" I call black externally (via command line) and then reload the buffer
+function! s:Black() abort
+	let l:file = expand("%:p")
+	let l:cmd = "black " . l:file
+	let l:output = system(l:cmd)
+	if v:shell_error
+		echohl ErrorMsg
+		echo l:output
+		echohl None
+	else
+		echo l:output
+		execute ":e"
+	endif
+endfunction
 
-" lsp_signature plugin
-" lua<<
-" local cfg = {
-"
-"     }
-"     require "lsp_signature".setup(cfg)
-" .
+command! -nargs=0 FormatBuffer :call s:Black()<CR>
