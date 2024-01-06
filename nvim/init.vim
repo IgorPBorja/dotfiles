@@ -17,7 +17,6 @@ call plug#begin('~/.vim/plugged')
 	Plug 'preservim/nerdtree'	
 	" integration of nerdtree with git
 	Plug 'Xuyuanp/nerdtree-git-plugin'
-	" Plug 'jiangmiao/auto-pairs'
 	Plug 'windwp/nvim-autopairs'	
 
 	" Tree-sitter for syntax-hightlighting
@@ -84,7 +83,6 @@ call plug#begin('~/.vim/plugged')
 	" Plugin for debugger
 	Plug 'puremourning/vimspector'
 call plug#end()
-
 
 " -------- KEYBINDINGS --------------------------------
 
@@ -234,7 +232,7 @@ nnoremap <leader><S-Tab> :bp<CR>
 nnoremap <C-E> :NERDTree<CR>
 
 " Source .vimrc with SPC-h-r-r in normal mode
-nnoremap <Space>hrr :source $MYVIMRC<CR>
+" nnoremap <Space>hrr :source $MYVIMRC<CR>
 
 " Quit with q + Enter (instead of recording) in NORMAL MODE
 nnoremap q :q
@@ -314,15 +312,56 @@ inoremap <C-S-Left> <Esc>v<C-Left>
 tnoremap <Esc> <C-\><C-n> 
 "" quitting is always forceful (jobs will always be running)
 
+"" Configuring auto-pairs
 
-" Some notes on nnn plugin
-" To stop focusing on window type ESC 
-" To show hidden files hit dot (.) 
+lua<<
+	require("nvim-autopairs").setup {} -- call setup function in .vim/plugged/nvim-autopairs/lua/nvim-autopairs.lua
+	local Rule = require('nvim-autopairs.rule')
+	local npairs = require('nvim-autopairs')
+	local cond = require('nvim-autopairs.conds')
+	-- print(vim.inspect(cond))
 
-" Opens the n³ window in a spli" t
-" let g:nnn#layout = 'vnew' " or vnew, tabnew etc.
-" nnoremap <Space>f :NnnExplorer<CR>
-"
+	npairs.add_rule(Rule("$","$","tex"))
+	npairs.add_rule(Rule("\\(", "\\)", "tex"))
+	npairs.add_rules(
+		{
+			Rule("\\[", "\\]", "tex")
+				:with_cr(cond.done())
+		}
+	)
+	-- you can use some built-in conditions
+	npairs.add_rules(
+		{
+			Rule("(", ")")
+				:with_cr(cond.done())
+		},
+		{
+			Rule("{", "}")
+				:with_cr(cond.done())
+		},
+		{
+			Rule("[", "]", "-tex")
+				:with_cr(cond.done())
+		}
+	)
+
+	npairs.add_rules(
+		{
+			Rule("$", "$", {"tex", "latex"})
+				-- don't add a pair if the next character is %
+				:with_pair(cond.not_after_regex("%%"))
+				-- don't move right when repeat character
+				:with_move(cond.none())
+		}
+	)
+
+	npairs.add_rules(
+		{
+			Rule("$$","$$",{"tex", "latex"})
+		}
+	)
+	--- check ./lua/nvim-autopairs/rules/basic.lua
+.
 
 " ----------- LATEX -----------
 "" Latex file autocloses
@@ -395,6 +434,10 @@ lua <<
 	  ---- If you need to change the installation directory of the parsers (see -> Advanced Setup)
 	  -- parser_install_dir = "/some/path/to/store/parsers", -- Remember to run vim.opt.runtimepath:append("/some/path/to/store/parsers")!
 
+	  -- python-specific indent
+	  indent = { enable = { "python" } },
+	  -- indent = { enable = true },
+
 	  highlight = {
 		enable = true,
 
@@ -446,6 +489,7 @@ lua<<
 					jedi_completion = { fuzzy = true, eager = true },
 					jedi_signature_help = { enabled = true },
 					-- linter
+					pylint = { enabled = false },
 					pycodestyle = { enabled = false }
 				},
 			},
@@ -493,47 +537,6 @@ lua<<
 	  end,
 	})
 .
-
-" ----------------- COC -----------------------
-" " See https://stackoverflow.com/questions/74158726/vimscript-calling-function-inside-inoremap-throws-unknown-function
-" " Use tab for trigger completion with characters ahead and navigate
-" " NOTE: There's always complete item selected by default, you may want to enable
-" " no select by `"suggest.noselect": true` in your configuration file
-" " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" " other plugin before putting this into your config
-" inoremap <silent><expr> <Tab>
-"        \ coc#pum#visible() ? coc#pum#next(1) :
-"       \ CheckBackspace() ? "\<Tab>" :
-"       \ coc#refresh()
-" inoremap <expr> <S-Tab> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
-"
-" " Accpet completion with Tab
-" inoremap <silent><expr> <TAB> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<TAB>"
-" " inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
-"                               " \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-"
-" function! CheckBackspace() abort
-"   let col = col('.') - 1
-"   return !col || getline('.')[col - 1]  =~# '\s'
-" endfunction
-"
-"
-" " See preview of function definition with Shift-k
-" function! ShowDocumentation()
-"   if CocAction('hasProvider', 'hover')
-"     call CocActionAsync('doHover')
-"   else
-"     call feedkeys('gd', 'in')
-"   endif
-" endfunction
-" " Use K to show documentation in preview window
-" nnoremap <silent> gd :call ShowDocumentation()<CR>
-"
-" " Scroll documentation window
-" " See https://github.com/neoclide/coc.nvim/issues/609
-" nnoremap coc#float#has_scroll() ? coc#float#scroll(1, 1) : "<Up>"
-" nnoremap coc#float#has_scroll() ? coc#float#scroll(0, 1) : "<Down>"
-" ----------------------------------------
 
 
 " Setup for Telescope file_browser picker 
@@ -596,21 +599,6 @@ lua<<
 		options = { theme = 'gruvbox' }
 	}
 .
-
-" Setup tabline
-" See https://github.com/crispgm/nvim-tabline
-" lua<<
-"     require('tabline').setup({
-"         show_index = true,           -- show tab index
-"         show_modify = true,          -- show buffer modification indicator
-"         show_icon = false,           -- show file extension icon
-"         fnamemodify = ':t',          -- file name modifier
-"         modify_indicator = '[+]',    -- modify indicator
-"         no_name = 'No name',         -- no name buffer name
-"         brackets = { '[', ']' },     -- file name brackets surrounding
-"         inactive_tab_max_length = 0  -- max length of inactive tab titles, 0 to ignore
-"     })
-" .
 
 " See https://github.com/akinsho/bufferline.nvim
 set termguicolors
@@ -699,46 +687,6 @@ lua <<EOF
   }
 EOF
 
-
-
-" --------------------- Copilot -------------
-" function! EnableCopilot()
-"     " Enable Copilot
-"     execute ":Copilot enable"
-"     " Map CR to default autocomplete
-" lua <<EOF
-"     local cmp = require'cmp'
-"     cmp.setup({
-"         mapping = cmp.mapping.preset.insert({
-"               ['<C-k>'] = cmp.mapping.scroll_docs(-4),
-"               ['<C-j>'] = cmp.mapping.scroll_docs(4),
-"               ['<C-Space>'] = cmp.mapping.complete(),
-"               ['<C-e>'] = cmp.mapping.abort(),
-"               ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-"             })
-"     })
-" EOF
-" endfunction
-"
-" function! DisableCopilot()
-"     " Redo mapping to autocomplete
-" lua <<EOF
-"     local cmp = require'cmp'
-"     cmp.setup({
-"         mapping = cmp.mapping.preset.insert({
-"               ['<C-k>'] = cmp.mapping.scroll_docs(-4),
-"               ['<C-j>'] = cmp.mapping.scroll_docs(4),
-"               ['<C-Space>'] = cmp.mapping.complete(),
-"               ['<C-e>'] = cmp.mapping.abort(),
-"               ['<Tab>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-"             })
-"     })
-" EOF
-" endfunction
-"
-" command! -nargs=0 EnableCopilot :call EnableCopilot()
-" command! -nargs=0 DisableCopilot :call DisableCopilot()
-"
 lua << 
 	vim.g.copilot_no_tab_map = true
 
