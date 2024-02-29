@@ -20,6 +20,16 @@ call plug#begin('~/.vim/plugged')
 	" GitHub Copilot
 	Plug 'github/copilot.vim'
 
+    " Plugin for configuring LSP
+    Plug 'neovim/nvim-lspconfig'
+
+    " Plugin that provides a completion engine for neovim
+    Plug 'hrsh7th/nvim-cmp'
+    " Snippet plugin
+    Plug 'saadparwaiz1/cmp_luasnip'
+    Plug 'L3MON4D3/LuaSnip'
+    Plug 'hrsh7th/cmp-nvim-lsp'
+
 	" Telescope
 	Plug 'nvim-lua/popup.nvim'
 	Plug 'nvim-lua/plenary.nvim'
@@ -45,11 +55,30 @@ call plug#begin('~/.vim/plugged')
 
     " color TODOs
     Plug 'folke/todo-comments.nvim'
+    
+	" Creating, renaming, deleting and copying files with this telescope picker
+	Plug 'nvim-telescope/telescope-file-browser.nvim'
 
     " Lualine: useful information (mode, git branch, etc)
     " NOT USING FOR NOW (MAKES NEOVIM SLOW)
     " Plug 'nvim-lualine/lualine.nvim'
 call plug#end()
+
+lua << EOF
+    -- Setup LSP for C++
+    local lspconfig = require('lspconfig')
+
+    lspconfig.clangd.setup{
+        cmd = { "clangd", "--clang-tidy", "--completion-style=detailed", "--suggest-missing-includes", "--header-insertion=iwyu", "--cross-file-rename"},
+        filetypes = { "c", "cpp", "objc", "objcpp" },
+        settings = {
+            ["clangd"] = {
+                compileFlags = {"-std=c++17"},
+            }
+        }
+    }
+    lspconfig.pyright.setup{}
+EOF
 
 " Keybindings
 " GitHub Copilot Keybindings
@@ -64,35 +93,18 @@ lua << EOF
 	vim.api.nvim_set_keymap("i", "<S-Tab>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
 EOF
 
-" C/C++ LSP
-if executable('clangd')
-  au User lsp_setup call lsp#register_server({
-        \ 'name': 'clangd',
-        \ 'cmd': {server_info->['clangd', '--background-index']},
-        \ 'whitelist': ['c', 'cpp'],
-        \ })
-endif
-" Python LSP
-if executable('pyright')
-    au User lsp_setup call lsp#register_server({
-        \ 'name': 'pyright',
-        \ 'cmd': {server_info->['pyright-langserver', '--stdio']},
-        \ 'whitelist': ['python'],
-        \ })
-endif
-
 " Lua LSP
 let g:lua_language_server_path = '~/lua-language-server/main.lua'
 lua << EOF
-local lua_language_server_path = vim.g.lua_language_server_path
+    local lua_language_server_path = vim.g.lua_language_server_path
 
-if vim.fn.executable(lua_language_server_path) == 1 then
-    local lsp = require('vim.lsp')
-    lsp.start_client({
-        cmd = {lua_language_server_path, "-E", "-e", "LANG=en", "--", vim.fn.stdpath('config').."/lua-language-server/main.lua"},
-        ...
-    })
-end
+    if vim.fn.executable(lua_language_server_path) == 1 then
+        local lsp = require('vim.lsp')
+        lsp.start_client({
+            cmd = {lua_language_server_path, "-E", "-e", "LANG=en", "--", vim.fn.stdpath('config').."/lua-language-server/main.lua"},
+            ...
+        })
+    end
 EOF
 
 " Vimscript LSP
@@ -104,24 +116,78 @@ if executable('vim-language-server')
         \ })
 endif
 
-" LSP Configuration
-augroup my_lsp_cpp
-  autocmd!
-  autocmd FileType c,cpp lua require'lspconfig'.clangd.setup{}
-augroup END
 
-" Autocomplete Configuration for C++ files
-autocmd FileType c,cpp setlocal omnifunc=v:lua.vim.lsp.omnifunc
+" global commands
+lua << EOF
+	vim.keymap.set('n', '<space>e', vim.diagnostic.open_float)
+	vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
+	vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
+    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration)
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references)
+    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation)
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover)
+    vim.keymap.set('n', '<F2>', vim.lsp.buf.rename)
+EOF
 
-augroup my_lsp_cpp
-  au!
-  autocmd FileType c,cpp nnoremap <silent> <buffer> gd <cmd>lua vim.lsp.buf.definition()<CR>
-  autocmd FileType c,cpp nnoremap <silent> <buffer> gD <cmd>lua vim.lsp.buf.declaration()<CR>
-  autocmd FileType c,cpp nnoremap <silent> <buffer> gr <cmd>lua vim.lsp.buf.references()<CR>
-  autocmd FileType c,cpp nnoremap <silent> <buffer> gi <cmd>lua vim.lsp.buf.implementation()<CR>
-  autocmd FileType c,cpp nnoremap <silent> <buffer> K :lua vim.lsp.buf.hover()<CR>
-  autocmd FileType c,cpp nnoremap <silent> <buffer> <F2> :lua vim.lsp.buf.rename()<CR>
-augroup END
+" Autocomplete Configuration
+lua << EOF
+    -- Enable LSP completion
+    -- vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+
+    -- Set completeopt to have a better completion experience
+    vim.o.completeopt = 'menuone,noselect'
+
+    local cmp = require('cmp')
+    local luasnip = require 'luasnip'
+    luasnip.config.setup {}
+
+    cmp.setup {
+      snippet = {
+        expand = function(args)
+          luasnip.lsp_expand(args.body)
+        end,
+      },
+      mapping = cmp.mapping.preset.insert {
+        ['<C-p>'] = cmp.mapping.select_prev_item(),
+        ['<C-n>'] = cmp.mapping.select_next_item(),
+        ['<C-k>'] = cmp.mapping.scroll_docs(-4),
+        ['<C-j>'] = cmp.mapping.scroll_docs(4),
+        ['<C-Space>'] = cmp.mapping.complete {},
+        ['<CR>'] = cmp.mapping.confirm {
+          behavior = cmp.ConfirmBehavior.Replace,
+          select = true,
+        },
+        ['<Tab>'] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_next_item()
+          elseif luasnip.expand_or_jumpable() then
+            luasnip.expand_or_jump()
+          else
+            fallback()
+          end
+        end, { 'i', 's' }),
+        ['<S-Tab>'] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_prev_item()
+          elseif luasnip.jumpable(-1) then
+            luasnip.jump(-1)
+          else
+            fallback()
+          end
+        end, { 'i', 's' }),
+      },
+      -- Enable documentation window alongside completion menu
+      window = {
+         completion = cmp.config.window.bordered(),
+         documentation = cmp.config.window.bordered(),        
+      },
+      sources = {
+        { name = 'nvim_lsp' },
+        { name = 'luasnip' },
+      },
+    }
+EOF
 
 " Find files using Telescope command-line sugar.
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
@@ -131,36 +197,47 @@ nnoremap <leader>help <cmd>Telescope help_tags<cr>
 nnoremap <leader>gs <cmd>Telescope git_status<cr>
 nnoremap <leader>gc <cmd>Telescope git_commits<cr>
 nnoremap <leader>tree <cmd>Telescope treesitter<cr>
+
 " Telescope FZF integration for file browsing
 nnoremap <leader>fo <cmd>Telescope file_browser<CR>
 
-" Autocomplete Configuration
-" Autocomplete Configuration
-set completeopt=menuone,noinsert,noselect
+" Setup for Telescope file_browser picker 
+" See repo https://github.com/nvim-telescope/telescope-file-browser.nvim
+lua <<
+	-- You don't need to set any of these options.
+	-- IMPORTANT!: this is only a showcase of how you can set default options!
+	require("telescope").setup {
+		extensions = {
+			file_browser = {
+                theme = "ivy",
+                -- disables netrw and use telescope-file-browser in its place
+                hijack_netrw = true,
+                mappings = {
+					["i"] = {
+                        -- your custom insert mode mappings
+                    },
+				    ["n"] = {
+					    -- your custom normal mode mappings
+					},
+				},
+			},
+        },
+    }
+	-- To get telescope-file-browser loaded and working with telescope,
+	-- you need to call load_extension, somewhere after setup function:
+	require("telescope").load_extension "file_browser"
 
-augroup my_lsp_completion
-    autocmd!
-    autocmd InsertEnter * call s:activate_lsp()
-    autocmd InsertLeave * call s:deactivate_lsp()
-augroup END
+	-- open file_browser with the path of the current buffer
+	-- show hidden files by default
+	vim.api.nvim_set_keymap(
+	  "n",
+	  "<space>fb",
+	  ":Telescope file_browser hidden=true path=%:p:h select_buffer=true<CR>",
+	  { noremap = true  }
+	)
+.
 
-function! s:activate_lsp()
-    if &l:filetype =~ 'cpp'
-        lua vim.lsp.buf.completion_active()
-    endif
-endfunction
-
-function! s:deactivate_lsp()
-    if &l:filetype =~ 'cpp'
-        lua vim.lsp.buf.completion_inactive()
-    endif
-endfunction
-
-" Map Tab to accept LSP autocomplete first suggestion
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-
-
-"" Vimspector stuff
+" Vimspector stuff
 
 " ------------------------------------------------
 "  Configuration for debugging with vimspector
@@ -360,3 +437,5 @@ nnoremap <C-t> :enew<CR>
 nnoremap <C-w> :bdelete<CR>
 " Force delete
 nnoremap <C-w>! :bdelete!<CR>
+
+tnoremap <Esc> <C-\><C-n>
