@@ -9,6 +9,7 @@ set autoindent          " Enable auto-indentation
 set smartindent         " Enable smart indentation
 set mouse=a             " Enable mouse support
 set autochdir           " Automatically set working directory to current file
+filetype plugin indent on
 
 let mapleader = "\<Space>"
 
@@ -78,6 +79,8 @@ lua << EOF
         }
     }
     lspconfig.pyright.setup{}
+    lspconfig.texlab.setup{}
+    lspconfig.vimls.setup{}
 EOF
 
 " Keybindings
@@ -439,3 +442,38 @@ nnoremap <C-w> :bdelete<CR>
 nnoremap <C-w>! :bdelete!<CR>
 
 tnoremap <Esc> <C-\><C-n>
+
+" Tex/Markdown commands
+function Compile(basename, ext)
+	echo "Compiling"
+	let filename = a:basename . "." . a:ext
+	if (a:ext == "tex")
+		"" disable interactive mode (pressing enter to skip warnings)
+		"" this makes it possible to use pdflatex in script, like this one
+		exe ":!pdflatex -interaction=nonstopmode " . filename
+	endif
+	if (a:ext == "md")
+		exe ":!pandoc " . filename . " -o " a:basename . ".pdf"
+	endif
+endfunction
+
+function CompileFromVim()
+	let basename = expand("%:r")
+	let ext = expand("%:e")
+	call Compile(basename, ext)
+endfunction
+
+function Display()
+	let basename = expand("%:r")
+	call CompileFromVim()
+	exe ":!xdg-open " . basename . ".pdf &"
+endfunction
+
+" autocmd FileType tex nnoremap <Space>p :let @" = expand("%")<CR>:exe ":!pdflatex " . getreg("@") <CR>
+" autocmd FileType plaintex nnoremap <Space>p :let @" = expand("%")<CR>:exe ":!pdflatex " . getreg("@") <CR>
+autocmd Filetype tex nnoremap <Space>td :call Display()<CR>
+autocmd Filetype plaintex nnoremap <Space>td :call Display()<CR>
+autocmd Filetype markdown nnoremap <Space>td :call Display()<CR>
+autocmd Filetype tex nnoremap <Space>tp :call CompileFromVim()<CR>
+autocmd Filetype plaintex nnoremap <Space>tp :call CompileFromVim()<CR>
+autocmd Filetype markdown nnoremap <Space>tp :call CompileFromVim()<CR>
