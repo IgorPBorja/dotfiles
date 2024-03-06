@@ -59,6 +59,9 @@ call plug#begin('~/.vim/plugged')
 	" Creating, renaming, deleting and copying files with this telescope picker
 	Plug 'nvim-telescope/telescope-file-browser.nvim'
 
+    " Putting marks
+    Plug 'chentoast/marks.nvim'
+
     " Lualine: useful information (mode, git branch, etc)
     " NOT USING FOR NOW (MAKES NEOVIM SLOW)
     " Plug 'nvim-lualine/lualine.nvim'
@@ -255,6 +258,10 @@ nnoremap <Space>dk :call vimspector#Restart()<CR>
 nnoremap <Space>dh :call vimspector#StepOut()<CR>
 nnoremap <Space>dl :call vimspector#StepInto()<CR>
 nnoremap <Space>dj :call vimspector#StepOver()<CR>
+" for normal mode - the word under the cursor
+nnoremap <Leader>di <Plug>VimspectorBalloonEval
+" for visual mode, the visually selected text
+xnoremap <Leader>di <Plug>VimspectorBalloonEval
 
 command! DebugMappings call s:ShowDebugMappings()
 command! LspMappings call s:ShowLspMappings()
@@ -439,3 +446,33 @@ nnoremap <C-w> :bdelete<CR>
 nnoremap <C-w>! :bdelete!<CR>
 
 tnoremap <Esc> <C-\><C-n>
+
+" Setup marks
+lua << EOF
+    require'marks'.setup {
+      -- whether to map keybinds or not. default true
+      default_mappings = true,
+      -- which builtin marks to show. default {}
+      builtin_marks = {},
+      -- whether movements cycle back to the beginning/end of buffer. default true
+      cyclic = true,
+      -- how often (in ms) to redraw signs/recompute mark positions. 
+      -- higher values will have better performance but may cause visual lag, 
+      -- while lower values may cause performance penalties. default 150.
+      refresh_interval = 300,
+      bookmark_0 = {
+        sign = "⚑",
+        virt_text = "",
+        -- explicitly prompt for a virtual line annotation when setting a bookmark from this group.
+        -- defaults to false.
+        annotate = false,
+      },
+      mappings = {
+        -- toogle bookmark at cursor line
+        toggle_bookmark0 = "mm",
+        delete_buf = "mD",
+        next = "mn",
+        prev = "mp"
+      }
+    }
+EOF
